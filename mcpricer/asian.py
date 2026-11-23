@@ -52,3 +52,21 @@ def price_asian(S0, K, T, r, sigma, n_steps=12, option="call", average="arithmet
         raise ValueError("average must be 'arithmetic' or 'geometric'")
     disc = math.exp(-r * T) * _payoff(avg, K, option)
     return MCResult(float(disc.mean()), float(disc.std(ddof=1) / np.sqrt(n_paths)), n_paths)
+
+
+def price_asian_control_variate(S0, K, T, r, sigma, n_steps=12, option="call",
+                                n_paths=100_000, q=0.0, rng=None):
+    """Arithmetic Asian priced with the geometric Asian as control variate (Kemna & Vorst, 1990).
+
+    Both payoffs are computed on the same paths. The geometric one has a known price, and the
+    two are almost perfectly correlated, so  Y - b (X - E[X])  removes most of the noise.
+    """
+    paths = simulate_gbm_paths(S0, T, r, sigma, n_steps, n_paths, q=q, rng=rng)[:, 1:]
+    disc = math.exp(-r * T)
+    y = disc * _payoff(paths.mean(axis=1), K, option)
+    x = disc * _payoff(np.exp(np.log(paths).mean(axis=1)), K, option)
+    ex = geometric_asian_price(S0, K, T, r, sigma, n_steps, option, q)
+    cov = np.cov(x, y, ddof=1)
+    b = cov[0, 1] / cov[0, 0]
+    adj = y - b * (x - ex)
+    return MCResult(float(adj.mean()), float(adj.std(ddof=1) / np.sqrt(n_paths)), n_paths)

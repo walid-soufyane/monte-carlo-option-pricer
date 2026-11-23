@@ -22,3 +22,13 @@ def test_ordering_geometric_arithmetic_european():
     geo = geometric_asian_price(S0, K, T, r, sigma, 12)
     arith = price_asian(S0, K, T, r, sigma, 12, n_paths=300_000, rng=12)
     assert geo < arith.price < bs_price(S0, K, T, r, sigma)
+
+
+def test_geometric_control_variate():
+    from mcpricer import price_asian_control_variate
+
+    plain = price_asian(S0, K, T, r, sigma, 12, n_paths=100_000, rng=13)
+    cv = price_asian_control_variate(S0, K, T, r, sigma, 12, n_paths=100_000, rng=13)
+    assert abs(cv.price - plain.price) < 4 * plain.std_error
+    # correlation is ~0.999, so the standard error should drop by well over 10x
+    assert cv.std_error < 0.1 * plain.std_error

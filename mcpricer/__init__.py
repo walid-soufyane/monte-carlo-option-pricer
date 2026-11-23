@@ -1,7 +1,7 @@
 from .black_scholes import bs_price
 from .paths import simulate_gbm_paths
 from .monte_carlo import MCResult, price_european, simulate_terminal
-from .asian import geometric_asian_price, price_asian
+from .asian import geometric_asian_price, price_asian, price_asian_control_variate
 from .variance_reduction import price_european_antithetic, price_european_control_variate
 
 __all__ = [
@@ -12,6 +12,7 @@ __all__ = [
     "simulate_gbm_paths",
     "geometric_asian_price",
     "price_asian",
+    "price_asian_control_variate",
     "price_european_antithetic",
     "price_european_control_variate",
 ]
