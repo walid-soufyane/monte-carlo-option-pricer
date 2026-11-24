@@ -29,3 +29,46 @@ def test_common_random_numbers_matter():
     crn = [bump_greeks(S0, K, T, r, sigma, n_paths=20_000, rng=i)["delta"] for i in range(20)]
     import numpy as np
     assert np.std(crn) < 0.1 * np.std(noisy)
+
+
+def _within(est, exact, k=4):
+    value, se = est
+    return abs(value - exact) < k * se
+
+
+@pytest.mark.parametrize("option", ["call", "put"])
+def test_pathwise_matches_black_scholes(option):
+    from mcpricer import pathwise_greeks
+
+    exact = bs_greeks(S0, K, T, r, sigma, option)
+    pw = pathwise_greeks(S0, K, T, r, sigma, option, n_paths=300_000, rng=8)
+    assert _within(pw["delta"], exact["delta"]) and _within(pw["vega"], exact["vega"])
+
+
+def test_likelihood_ratio_matches_black_scholes():
+    from mcpricer import likelihood_ratio_greeks
+
+    exact = bs_greeks(S0, K, T, r, sigma)
+    lr = likelihood_ratio_greeks(S0, K, T, r, sigma, n_paths=400_000, rng=9)
+    for g in ("delta", "gamma", "vega"):
+        assert _within(lr[g], exact[g]), g
+
+
+def test_likelihood_ratio_handles_digital():
+    # digital call delta = e^{-rT} phi(d2) / (S0 sigma sqrt T): pathwise gives 0 here, LR works
+    import math
+    from scipy.stats import norm
+    from mcpricer import likelihood_ratio_greeks
+
+    d2 = (math.log(S0 / K) + (r - 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+    exact = math.exp(-r * T) * norm.pdf(d2) / (S0 * sigma * math.sqrt(T))
+    lr = likelihood_ratio_greeks(S0, K, T, r, sigma, payoff="digital", n_paths=400_000, rng=10)
+    assert _within(lr["delta"], exact)
+
+
+def test_pathwise_has_lower_variance_than_lr():
+    from mcpricer import likelihood_ratio_greeks, pathwise_greeks
+
+    pw = pathwise_greeks(S0, K, T, r, sigma, n_paths=100_000, rng=1)
+    lr = likelihood_ratio_greeks(S0, K, T, r, sigma, n_paths=100_000, rng=1)
+    assert pw["delta"][1] < lr["delta"][1] and pw["vega"][1] < lr["vega"][1]

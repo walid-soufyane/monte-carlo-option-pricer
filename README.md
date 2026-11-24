@@ -11,6 +11,7 @@ Pricing options by Monte Carlo simulation under risk-neutral geometric Brownian 
 - Variance reduction: antithetic variates and control variates (discounted S_T as control, optimal b estimated from the sample)
 - Exact GBM path simulation on a time grid (optionally antithetic)
 - Asian options (arithmetic and geometric average): Monte Carlo, geometric closed form, and the geometric Asian as a control variate for the arithmetic one (about 30x lower standard error)
+- Greeks three ways: bump-and-reprice with common random numbers, pathwise (IPA), and likelihood ratio (works for digitals), checked against analytic Black-Scholes Greeks
 - Barrier options (up/down, in/out) with Brownian-bridge correction for continuous monitoring, checked against the closed-form down-and-out call
 - Tests: MC vs closed forms, put-call parity, O(1/√N) convergence, martingale property, AM-GM ordering, knock-in + knock-out = vanilla. Run on every push by GitHub Actions
 
@@ -52,12 +53,23 @@ Down-and-out call (S0=K=100, H=90, T=1, r=4%, σ=25%), 50 monitoring steps, clos
 
 Checking the barrier only at grid dates misses crossings between them and overprices the knock-out by about 11%. The bridge correction removes that bias.
 
+## Greeks example
+ATM call (S0=K=100, T=1, r=4%, σ=20%), 200,000 paths, std. error in brackets:
+
+| Greek | Black-Scholes | Bump (CRN) | Pathwise | Likelihood ratio |
+|---|---|---|---|---|
+| Delta | 0.6179 | 0.6169 | 0.6170 (0.0013) | 0.6137 (0.0032) |
+| Gamma | 0.0191 | 0.0191 | n/a | 0.0189 (0.0003) |
+| Vega | 38.14 | 37.86 | 37.86 (0.17) | 37.90 (0.61) |
+
+Pathwise is the most precise but needs a payoff that is continuous in S_T. Likelihood ratio is noisier but works for any payoff, including digitals.
+
 ## Roadmap
 - [x] European options + Black-Scholes benchmark
 - [x] Variance reduction: antithetic variates, control variates
 - [x] Path simulation + Asian options (arithmetic and geometric)
 - [x] Barrier options (knock-in / knock-out) with Brownian-bridge correction
-- [ ] Greeks: bump-and-reprice, pathwise and likelihood-ratio estimators
+- [x] Greeks: bump-and-reprice, pathwise and likelihood-ratio estimators
 - [ ] Quasi-Monte Carlo (Sobol) vs pseudo-random convergence study
 - [ ] Heston stochastic volatility model
 - [ ] Convergence plots and a results notebook
