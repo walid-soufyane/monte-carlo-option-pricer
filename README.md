@@ -12,6 +12,7 @@ Pricing options by Monte Carlo simulation under risk-neutral geometric Brownian 
 - Exact GBM path simulation on a time grid (optionally antithetic)
 - Asian options (arithmetic and geometric average): Monte Carlo, geometric closed form, and the geometric Asian as a control variate for the arithmetic one (about 30x lower standard error)
 - Greeks three ways: bump-and-reprice with common random numbers, pathwise (IPA), and likelihood ratio (works for digitals), checked against analytic Black-Scholes Greeks
+- Randomised quasi-Monte Carlo with scrambled Sobol points, plus a convergence study against plain MC
 - Barrier options (up/down, in/out) with Brownian-bridge correction for continuous monitoring, checked against the closed-form down-and-out call
 - Tests: MC vs closed forms, put-call parity, O(1/√N) convergence, martingale property, AM-GM ordering, knock-in + knock-out = vanilla. Run on every push by GitHub Actions
 
@@ -64,12 +65,23 @@ ATM call (S0=K=100, T=1, r=4%, σ=20%), 200,000 paths, std. error in brackets:
 
 Pathwise is the most precise but needs a payoff that is continuous in S_T. Likelihood ratio is noisier but works for any payoff, including digitals.
 
+## Quasi-Monte Carlo convergence
+European call (S0=100, K=105, T=1, r=4%, σ=20%), RMSE vs Black-Scholes over 20 repetitions:
+
+| N | Plain MC | Scrambled Sobol |
+|---|---|---|
+| 256 | 0.717 | 0.0450 |
+| 4,096 | 0.160 | 0.0025 |
+| 65,536 | 0.050 | 0.00015 |
+
+Fitted log-log slopes: **−0.51** for MC (theory −1/2) and **−1.05** for Sobol (near −1). At 65k points Sobol is about 300x more accurate.
+
 ## Roadmap
 - [x] European options + Black-Scholes benchmark
 - [x] Variance reduction: antithetic variates, control variates
 - [x] Path simulation + Asian options (arithmetic and geometric)
 - [x] Barrier options (knock-in / knock-out) with Brownian-bridge correction
 - [x] Greeks: bump-and-reprice, pathwise and likelihood-ratio estimators
-- [ ] Quasi-Monte Carlo (Sobol) vs pseudo-random convergence study
+- [x] Quasi-Monte Carlo (Sobol) vs pseudo-random convergence study
 - [ ] Heston stochastic volatility model
 - [ ] Convergence plots and a results notebook

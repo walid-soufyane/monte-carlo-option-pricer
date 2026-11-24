@@ -1,6 +1,7 @@
 from .barrier import down_and_out_call, price_barrier
 from .black_scholes import bs_greeks, bs_price
 from .greeks import bump_greeks, likelihood_ratio_greeks, pathwise_greeks
+from .qmc import convergence_study, price_european_rqmc
 from .paths import simulate_gbm_paths
 from .monte_carlo import MCResult, price_european, simulate_terminal
 from .asian import geometric_asian_price, price_asian, price_asian_control_variate
@@ -23,4 +24,6 @@ __all__ = [
     "down_and_out_call",
     "price_european_antithetic",
     "price_european_control_variate",
+    "price_european_rqmc",
+    "convergence_study",
 ]
